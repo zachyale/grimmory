@@ -101,6 +101,7 @@ jobs:
     name: Notify Discord (RC)
     if: ${{ always() && needs.generate-notes.result == 'success' }}
     needs: [resolve_ref, generate-notes]
+    permissions: {}
     uses: ./.github/workflows/notify-discord-release-notes.yml
     secrets:
       discord_webhook: ${{ secrets.DISCORD_RC_WEBHOOK != '' && secrets.DISCORD_RC_WEBHOOK || secrets.DISCORD_RELEASE_WEBHOOK }}

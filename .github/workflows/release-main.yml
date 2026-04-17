@@ -188,6 +188,7 @@ jobs:
     name: Notify Discord (Stable)
     if: ${{ needs.semantic-release.outputs.released == 'true' && needs.publish-release.result == 'success' && needs.prepare-release-notification.result == 'success' }}
     needs: [semantic-release, publish-release, prepare-release-notification]
+    permissions: {}
     uses: ./.github/workflows/notify-discord-release-notes.yml
     secrets:
       discord_webhook: ${{ secrets.DISCORD_STABLE_WEBHOOK != '' && secrets.DISCORD_STABLE_WEBHOOK || secrets.DISCORD_RELEASE_WEBHOOK }}

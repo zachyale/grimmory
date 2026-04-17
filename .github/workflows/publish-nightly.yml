@@ -163,6 +163,7 @@ jobs:
     name: Notify Discord (Nightly)
     if: ${{ always() && needs.generate-notes.result == 'success' && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') }}
     needs: [resolve_ref, build-and-push, generate-notes]
+    permissions: {}
     uses: ./.github/workflows/notify-discord-release-notes.yml
     secrets:
       discord_webhook: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK != '' && secrets.DISCORD_NIGHTLY_WEBHOOK || secrets.DISCORD_RELEASE_WEBHOOK }}
