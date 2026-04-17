@@ -1,0 +1,103 @@
+name: Release - Notify Discord
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: 'Target message channel context (for template selection)'
+        required: true
+        type: string
+      candidate_sha:
+        description: 'Resolved commit SHA for the candidate build'
+        required: true
+        type: string
+      base_tag:
+        description: 'Stable base tag that the candidate is built on top of'
+        required: false
+        default: ''
+        type: string
+      predicted_version:
+        description: 'Predicted next semantic version (without v-prefix)'
+        required: false
+        default: ''
+        type: string
+      release_notes:
+        description: 'Release notes body generated from conventional commits'
+        required: false
+        default: ''
+        type: string
+      compare_url:
+        description: 'GitHub compare URL between base stable tag and candidate SHA'
+        required: false
+        default: ''
+        type: string
+      image_tag:
+        description: 'Container image tag for this build'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      discord_webhook:
+        description: 'Discord webhook URL for release notifications'
+        required: true
+
+jobs:
+  notify:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Compose Message
+        id: compose
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          BASE_TAG: ${{ inputs.base_tag }}
+          PREDICTED_VERSION: ${{ inputs.predicted_version }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+          COMPARE_URL: ${{ inputs.compare_url }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -eu
+
+          short_sha="$(printf '%s' "$CANDIDATE_SHA" | cut -c1-7)"
+          display_version="${PREDICTED_VERSION:-N/A}"
+
+          if [ "$CHANNEL" = "rc" ]; then
+            header="🧪 **Release Candidate Ready for Regression Testing**"
+            body="${header}\n- Candidate SHA: \`${short_sha}\`\n- Predicted stable version: \`v${display_version}\`\n- Base stable tag: \`${BASE_TAG:-N/A}\`"
+
+            if [ -n "$IMAGE_TAG" ]; then
+              body="${body}\n- Docker tag: \`${IMAGE_TAG}\`"
+            fi
+
+            if [ -n "$COMPARE_URL" ]; then
+              body="${body}\n- Compare: ${COMPARE_URL}"
+            fi
+          else
+            header="📦 **Build Notification**"
+            body="${header}\n- Candidate SHA: \`${short_sha}\`\n- Predicted stable version: \`v${display_version}\`"
+          fi
+
+          if [ -n "$RELEASE_NOTES" ]; then
+            body="${body}\n\n**Conventional Commit Changelog**\n${RELEASE_NOTES}"
+          else
+            body="${body}\n\n_No release-relevant commits detected for this candidate._"
+          fi
+
+          {
+            echo 'message<<EOF'
+            printf '%b\n' "$body"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send Discord Webhook
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.discord_webhook }}
+          MESSAGE: ${{ steps.compose.outputs.message }}
+        run: |
+          set -eu
+          payload="$(jq -n --arg content "$MESSAGE" '{content: $content}')"
+          curl -sS -X POST "$DISCORD_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "$payload"
