@@ -99,7 +99,7 @@ jobs:
             else
               predicted_release="no predicted release"
             fi
-            description="${description}\n- Predicted release: \`${predicted_release}\`"
+            description="${description}\n- Predicted Release: \`${predicted_release}\`"
           fi
 
           if [ -n "$COMPARE_URL" ]; then
@@ -112,9 +112,7 @@ jobs:
             echo 'content<<EOF'
             printf '%s\n' "$content"
             echo 'EOF'
-            echo 'title_url<<EOF'
-            printf '%s\n' "$title_url"
-            echo 'EOF'
+            echo "title_url=${title_url}"
             echo 'description<<EOF'
             printf '%b\n' "$description"
             echo 'EOF'
@@ -137,18 +135,56 @@ jobs:
               {
                 content: $content,
                 embeds: [
-                  (
-                    {
-                      title: "View Changelog",
-                      description: $description,
-                      color: 5763719
-                    }
-                    + (if $title_url != "" then {url: $title_url} else {} end)
-                  )
+                  {
+                    title: "Build Details",
+                    description: $description,
+                    color: 5763719
+                  }
                 ]
               }
+              + (
+                if $title_url != "" then
+                  {
+                    components: [
+                      {
+                        type: 1,
+                        components: [
+                          {
+                            type: 2,
+                            style: 5,
+                            label: "View Changelog",
+                            url: $title_url
+                          },
+                          {
+                            type: 2,
+                            style: 5,
+                            label: "Report Issue",
+                            url: "https://github.com/orgs/grimmory-tools/discussions/new?category=issue-triage"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                else
+                  {
+                    components: [
+                      {
+                        type: 1,
+                        components: [
+                          {
+                            type: 2,
+                            style: 5,
+                            label: "Report Issue",
+                            url: "https://github.com/orgs/grimmory-tools/discussions/new?category=issue-triage"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                end
+              )
             ')"
 
-          curl --fail-with-body -sS -X POST "$DISCORD_WEBHOOK" \
+          curl --fail-with-body -sS -X POST "${DISCORD_WEBHOOK}?with_components=true" \
             -H 'Content-Type: application/json' \
             -d "$payload"
