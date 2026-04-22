@@ -67,6 +67,8 @@ export class AppBooksApiService {
       if (a.length !== b.length) return false;
       for (let i = 0; i < a.length; i++) {
         if (a[i].id !== b[i].id) return false;
+        if (a[i].metadata?.coverUpdatedOn !== b[i].metadata?.coverUpdatedOn) return false;
+        if (a[i].metadata?.audiobookCoverUpdatedOn !== b[i].metadata?.audiobookCoverUpdatedOn) return false;
       }
       return true;
     }
@@ -109,6 +111,9 @@ export class AppBooksApiService {
   readonly amazonRatingOptions = computed(() => this._filterOptions()?.amazonRatings ?? []);
   readonly goodreadsRatingOptions = computed(() => this._filterOptions()?.goodreadsRatings ?? []);
   readonly hardcoverRatingOptions = computed(() => this._filterOptions()?.hardcoverRatings ?? []);
+  readonly lubimyczytacRatingOptions = computed(() => this._filterOptions()?.lubimyczytacRatings ?? []);
+  readonly ranobedbRatingOptions = computed(() => this._filterOptions()?.ranobedbRatings ?? []);
+  readonly audibleRatingOptions = computed(() => this._filterOptions()?.audibleRatings ?? []);
   readonly pageCountOptions = computed(() => this._filterOptions()?.pageCounts ?? []);
   readonly shelfStatusOptions = computed(() => this._filterOptions()?.shelfStatuses ?? []);
   readonly readStatusOptions = computed(() => this._filterOptions()?.readStatuses ?? []);
@@ -199,6 +204,9 @@ export class AppBooksApiService {
       ['amazonRating', filters.amazonRating],
       ['goodreadsRating', filters.goodreadsRating],
       ['hardcoverRating', filters.hardcoverRating],
+      ['lubimyczytacRating', filters.lubimyczytacRating],
+      ['ranobedbRating', filters.ranobedbRating],
+      ['audibleRating', filters.audibleRating],
       ['pageCount', filters.pageCount],
       ['shelfStatus', filters.shelfStatus],
       ['comicCharacter', filters.comicCharacter],
